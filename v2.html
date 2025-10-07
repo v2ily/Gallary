@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Gallery For My Love</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configure Tailwind for Custom Colors and Fonts -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'midnight': '#0A0A0A',
+                        'gold-highlight': '#FFD700',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0) rotate(0.5deg)' },
+                            '50%': { transform: 'translateY(-5px) rotate(-0.5deg)' },
+                        },
+                    },
+                    animation: {
+                        float: 'float 6s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Base styles */
+        body {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%23FFD700" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path fill="%23FFD700" d="M10 16.5l6-4.5-6-4.5v9z"/></svg>') 12 12, auto;
+        }
+
+        /* 3D and Depth Simulation Styles */
+        .photo-card {
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-style: preserve-3d;
+            transform: perspective(1000px) translateZ(0);
+            position: relative;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2), 0 0 5px rgba(255, 215, 0, 0.1);
+            will-change: transform, box-shadow;
+        }
+
+        .photo-card:hover {
+            transform: perspective(1000px) translateZ(50px) rotateX(5deg) rotateY(5deg);
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3);
+            z-index: 10;
+        }
+        
+        /* Custom gold glow shadow for modal */
+        .shadow-gold-glow {
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.3), 0 0 10px rgba(255, 215, 0, 0.1);
+        }
+
+        /* Caption Reveal */
+        .caption {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .photo-card:hover .caption {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Layered Grid Specific Adjustments */
+        #layered-grid .photo-card:nth-child(1) { transform: perspective(1000px) translateZ(0px) rotate(-2deg); z-index: 4; }
+        #layered-grid .photo-card:nth-child(2) { transform: perspective(1000px) translateZ(20px) rotate(3deg); z-index: 5; animation: float 7s ease-in-out infinite; }
+        #layered-grid .photo-card:nth-child(3) { transform: perspective(1000px) translateZ(10px) rotate(-5deg); z-index: 3; }
+        #layered-grid .photo-card:nth-child(4) { transform: perspective(1000px) translateZ(-5px) rotate(1deg); z-index: 2; animation: float 8s ease-in-out infinite reverse; }
+
+        #layered-grid .photo-card:hover:nth-child(1) { transform: perspective(1000px) translateZ(60px) rotate(-1deg); }
+        #layered-grid .photo-card:hover:nth-child(2) { transform: perspective(1000px) translateZ(80px) rotate(4deg); }
+        #layered-grid .photo-card:hover:nth-child(3) { transform: perspective(1000px) translateZ(70px) rotate(-4deg); }
+        #layered-grid .photo-card:hover:nth-child(4) { transform: perspective(1000px) translateZ(55px) rotate(2deg); }
+
+        /* Rotating/Auto-Scrolling Carousel Styles - Now scroll-based */
+        .carousel-wrapper {
+            overflow-x: scroll; /* Key for scrollLeft to work */
+            overflow-y: hidden;
+            position: relative;
+            /* Hide the scrollbar for aesthetics */
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .carousel-wrapper::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .carousel-track {
+            display: flex;
+            padding: 2rem 0;
+            perspective: 1500px;
+            width: fit-content;
+            /* White space prevents items from wrapping vertically */
+            white-space: nowrap; 
+        }
+
+        .carousel-item {
+            flex-shrink: 0;
+            margin: 0 2rem;
+            transform: rotateY(0deg);
+            transition: transform 0.6s ease;
+        }
+
+        /* Parallax effect on initial background element */
+        .parallax-bg {
+            transform: translate3d(0, 0, 0);
+        }
+    </style>
+</head>
+<body class="bg-midnight min-h-screen text-gray-100 font-sans">
+
+    <!-- Global Container for Parallax Effect -->
+    <div id="scroll-container" class="min-h-screen overflow-y-scroll overflow-x-hidden" onscroll="handleParallax()">
+
+        <!-- Header: Floating Element -->
+        <header class="sticky top-0 z-50 p-6 bg-midnight/90 backdrop-blur-sm border-b border-gold-highlight/30 shadow-2xl">
+            <h1 class="text-3xl sm:text-4xl text-center font-display tracking-widest text-gold-highlight animation-float">
+                Our Story: Our Memory
+            </h1>
+        </header>
+
+        <!-- Section 1: Layered Grid with Depth -->
+        <section class="py-20 px-4 sm:px-10 relative bg-gray-900/50">
+            <div class="parallax-bg absolute inset-0 bg-cover opacity-10"
+                 style="background-image: url('https://placehold.co/1920x1080/0A0A0A/FFD700?text=Motki');">
+            </div>
+            <div class="relative max-w-6xl mx-auto">
+                <h2 class="text-2xl font-display text-center mb-16 text-gold-highlight tracking-wider">Chapter I: The Beginning</h2>
+                <p class="text-2xl font-display text-center mb-16 text-gold-highlight">Congratulation, we completed a year 💝</p>
+                <div id="layered-grid" class="relative h-[450px] w-full flex items-center justify-center">
+
+                    <!-- Photo 1 (Front/Center) -->
+                    <div class="photo-card absolute w-64 h-80 rounded-lg overflow-hidden cursor-pointer" style="left: 50%; transform: translateX(-50%);">
+                        <img src="../photo/firstdate.jpg" class="w-full h-full object-cover">
+                        <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                            <p class="text-gold-highlight font-display"><span>02 November 2025</span><br>"It all started here. It was first date, we both were so happy together & maze ki baat ye h ki humme restraunt wale ne bhaga diya tha becoz hmlog bahot der se baithe hue the waha....It was Lovely."</p>
+                        </div>
+                    </div>
+
+                    <!-- Photo 2 (Left Back) -->
+                    <div class="photo-card absolute w-56 h-72 rounded-lg overflow-hidden cursor-pointer" style="left: 20%; top: 50px;">
+                        <img src="../photo/firstride.jpg" class="w-full h-full object-cover">
+                        <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                            <p class="text-gold-highlight font-display">"That view was beautiful, but you were better.Remeber tum bamak gayi thi kyunki mai serious ho kr gadi chala rha tha taki tumhe safe pahucha du ghar...jiwan me pahili baar highway pe scooty chala rha tha & sath me tum v thi..Moment to remember is that jab tum hug kr rhi thi to bahot badhiya feel ho rha tha....Mai bahot khush tha ktunki meri ek wish puri huyi uss din."</p>
+                        </div>
+                    </div>
+
+                    <!-- Photo 3 (Right Back) -->
+                    <div class="photo-card absolute w-52 h-64 rounded-lg overflow-hidden cursor-pointer" style="right: 20%; bottom: 50px;">
+                        <img src="../photo/laughter.jpg" class="w-full h-full object-cover">
+                        <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                            <p class="text-gold-highlight font-display"><span>"Hum dono sath me achhe lagte h ❌"</span><br>" Humdono sath me khush axe lagte h ✅<br>mere sath to hamesha hasnte hi rhi ho toh aise hi hanse raha karo...achhi lagti ho</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Section 2: Auto-Scrolling Carousel -->
+        <section class="py-20 bg-midnight">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-2xl font-display text-center mb-10 text-gold-highlight tracking-wider">A Continuous Scroll Through Time (Scroll Wheel to Control)</h2>
+
+                <div id="carousel-wrapper" class="carousel-wrapper">
+                    <div id="carousel-track" class="carousel-track">
+                        <!-- Group 1 (Original Items) - Added data-src and data-caption -->
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/firstmeet.jpg" 
+                             data-caption="Pahili baar physically mile tumse because tumhe momos party jo deni thi, Uss samay kaisi lag rhi thi tu, jeans & top me aayi thi...aisa lag rha tha jaise ek aalu ko kapda pahina diya gaya ho...ussi din tera naam rakha tha MINI ELEPHANT jo ki suit v krta tha tere pe....khair ab to patli ho gyi...Chicken Momos tasty thi"
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/firstmeetb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"Meri MINI ELEPHANT"</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/eat.jpg" 
+                             data-caption="Remeber this was our first date and first date are always special...sach bolu to mai thoda nervous tha raste bhar har dukan ki taraf dekh rha tha ki yaha se kux mil taki tumhare liye kux le lu..But meri kismat utni axi thodi h first date pe bina gift ka gaya tha..Sorry for that..Tumhare hatho se kha kr bahot axa laga mujhe..Thank You..Tumhare hatho se khana aur tasty lagta h."
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/eatb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"Tumhare hatho se khana tasty lagti h."</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/firsthug.jpg" 
+                             data-caption="I hugged you first time ever & that was on a public place. I loved that hug, I know it was very short & not proper but for me that was enough...And the flowers, This was the first time ever..mujhe flowers mile the ek nhi puri puri 20...I love that and Thanks for waiting, you waited so long for me...what were happening to you no what were happening deep inside your heart? and how can I forgot about you chicks..tamatar k jaise lal ho gye the itni khush thi tum. I Love You "
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/firsthugb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"We hugged for the first time"</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/rings.jpg" 
+                             data-caption="Do you remember this night? This was the day when we exchanged our rings not officially but privately..One of my best night of the world with you that I will never forgot. Tumne mere liye khana order ki thi, Chaap & Rumali roti mere pass bill aaj v hai..maine sambhal kr rakhi h."
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/ringb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"Saket me aapka swagat hai"</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/sleep.jpg" 
+                             data-caption="Maan lo mere kandhe se safe jagah kahi nhi h tumhare liye jaha tum ghoda bech kr so sako..Remember whenever you feel tired my shoulders will always available for you such that you can sleep calmly...MY Love "
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/sleepb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"Safest place for you"</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/miror.jpg" 
+                             data-caption="Ruko ek minute & firse dekho uss pic ko..are bhai dekho...kitne axe lagte h humlog sath me..specialy tum kitni sundar & khush lag rhi ho...aise hi hamesha khush raha karo sundar to tum ho hi.."
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/mirorb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"Sath me kitne achhe lagte h"</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/hath.jpg" 
+                             data-caption="Mere hantho me tera hath ho to aur kya mangu mai iss khuda se..tujhe paa kr aisa lagta h sab kuch de diya h khuda ne apne jholi se..."
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/hathb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"Mere hath me tera hath ho."</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/infront.jpg" 
+                             data-caption="by looking at you,just want to say- hothwa tohar jaise bhor ke kiriniya, ankhiya me pyar ke samayil ba duniya, bindiya bujhala aise jaise chand sawale bade, bhagwan badi fursat se tohra ke banawale bade....  "
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/infrontb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"kitni sundar ho tum."</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/kissy.jpg" 
+                             data-caption="First kiss in the public place. Waise to mai shy nature ka hu pr ye pic worth it hai..."
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/kissyb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"A perfect picture"</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/saket.jpg" 
+                             data-caption="You clicking our pics in my phone...I lobe it when you take picyures of our in my phone.."
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/saketb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"I miss these days"</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/train.jpg" 
+                             data-caption="This pic looks better in ghibli portrait..so i send it to you...You also used to say na ki tumse ek hamari pic nhi nikalwaya jata hai..lo dekh aap kux bole & humm na kre ho skta h aisa kavi...."
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/trainb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"Ghibli wali pic."</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/looking.jpg" 
+                             data-caption="Just a random day, nothing special about the day itself, except that it was spent with you. Those are the memories I treasure most—the small, ordinary moments."
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/lookingb.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"Teri ankho me kho jau."</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/janmashtmi.jpg" 
+                             data-caption="Kitni special day thi yaar... Ek to janmashtmi matlab Madhav ka din uppar se sath me tum...It was the best day of year.I would also love to spend next janmashtmi with you...Will you? "
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/janmashtmib.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"Jai Shree Krishna "</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item photo-card w-72 h-96 rounded-xl overflow-hidden shadow-2xl cursor-pointer" 
+                             data-src="../photo/kissi.jpg" 
+                             data-caption="Every step we take together feels like moving toward something amazing. I can't wait to see all the adventures waiting for us. I love you, always."
+                             onclick="handlePhotoClick(this)">
+                            <img src="../photo/kissib.jpg" class="w-full h-full object-cover">
+                            <div class="caption absolute inset-0 bg-midnight/80 p-4 flex items-center justify-center text-center text-sm">
+                                <p class="text-gold-highlight font-display">"To all the days yet to come..."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer: Personal Message -->
+        <footer class="p-10 bg-gray-900/70 border-t border-gold-highlight/30 text-center">
+            <p class="text-xl font-display text-gold-highlight">"My favorite view is you."</p>
+            <p class="mt-2 text-sm text-gray-400">© 2025 Forever Ours</p>
+        </footer>
+    </div>
+    
+    <!-- Pop-up Modal Structure -->
+    <div id="photo-modal" class="fixed inset-0 bg-midnight/95 z-[999] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0" onclick="closeModal()">
+        <!-- MODIFICATION: Changed 'lg:flex-row' to 'md:flex-row' to make it side-by-side (transversal) sooner -->
+        <div class="bg-gray-800 rounded-2xl shadow-gold-glow max-w-4xl w-full flex flex-col md:flex-row overflow-hidden relative" onclick="event.stopPropagation()">
+            
+            <!-- Close Button -->
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gold-highlight z-10 p-2 bg-midnight/50 hover:bg-midnight/80 rounded-full transition duration-300 border border-gold-highlight/30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <!-- Image Side -->
+            <!-- MODIFICATION: Changed 'lg:w-1/2' to 'md:w-1/2' -->
+            <div class="md:w-1/2 w-full h-80 md:h-auto min-h-60">
+                <img id="modal-image" src="" alt="Selected Photo" class="w-full h-full object-cover">
+            </div>
+            
+            <!-- Text Side -->
+            <!-- MODIFICATION: Changed 'lg:w-1/2' to 'md:w-1/2' -->
+            <div class="md:w-1/2 w-full p-8 flex flex-col justify-center text-center">
+                <h3 class="text-3xl font-display text-gold-highlight mb-4">A Treasured Moment</h3>
+                <p id="modal-caption" class="text-gray-300 font-sans leading-relaxed text-left"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Interactivity -->
+    <script>
+        // --- 1. Subtle Parallax Effect ---
+        const scrollContainer = document.getElementById('scroll-container');
+        const parallaxBg = document.querySelector('.parallax-bg');
+        
+        function handleParallax() {
+            const scrollY = scrollContainer.scrollTop;
+            // Apply a slight upward translation to the background as the user scrolls down
+            parallaxBg.style.transform = `translate3d(0, ${scrollY * 0.2}px, 0)`;
+        }
+
+        // --- 2. Auto-Scrolling and Manual Control for Carousel ---
+        const carouselWrapper = document.getElementById('carousel-wrapper');
+        const carouselTrack = document.querySelector('#carousel-track');
+        let scrollInterval;
+        let userInteractionTimer;
+        let isUserInteracting = false;
+        let originalContentWidth = 0; // Stores the width of one set of items
+
+        // Function to start the automatic scroll
+        function startAutoScroll() {
+            if (isUserInteracting || scrollInterval) return; // Prevent multiple intervals
+            
+            // Start the interval to smoothly increment scroll position
+            scrollInterval = setInterval(() => {
+                // Check if we have scrolled past the original content width (i.e., into the duplicate set)
+                if (carouselWrapper.scrollLeft >= originalContentWidth) {
+                    // Seamlessly jump back to the start of the duplicate set
+                    carouselWrapper.scrollLeft -= originalContentWidth;
+                }
+                
+                // Smoothly scroll one pixel at a time
+                carouselWrapper.scrollLeft += 1;
+                
+            }, 40); // 40ms interval for smooth, medium speed scroll
+
+            console.log("Auto-scroll started.");
+        }
+
+        // Function to stop the automatic scroll
+        function stopAutoScroll() {
+            clearInterval(scrollInterval);
+            scrollInterval = null;
+            console.log("Auto-scroll stopped.");
+        }
+        
+        // Function to handle the manual mouse wheel scroll
+        if (carouselWrapper) {
+            carouselWrapper.addEventListener('wheel', (event) => {
+                // Prevent vertical page scroll when hovering over the carousel
+                event.preventDefault(); 
+                
+                // Stop the auto-scroll immediately
+                stopAutoScroll();
+
+                // Mark interaction and clear any pending resume timer
+                isUserInteracting = true;
+                clearTimeout(userInteractionTimer);
+                
+                // Use the vertical scroll amount (deltaY) to scroll horizontally (scrollLeft)
+                // Multiplier for a faster, more responsive scroll
+                const scrollSpeedMultiplier = 1.5;
+                carouselWrapper.scrollLeft += event.deltaY * scrollSpeedMultiplier;
+
+                // Handle boundary wrap-around during manual scroll for infinite feel
+                const maxScrollLeft = carouselWrapper.scrollWidth - carouselWrapper.clientWidth;
+                if (carouselWrapper.scrollLeft >= maxScrollLeft) {
+                    // If scrolled past the end, jump back to the start of the cloned section
+                    carouselWrapper.scrollLeft -= originalContentWidth;
+                } else if (carouselWrapper.scrollLeft < 0) {
+                    // If scrolled before the start (scrolling backwards), jump to the end of the cloned section
+                    carouselWrapper.scrollLeft += originalContentWidth;
+                }
+                
+                // Set a timer to resume auto-scroll after a short delay (e.g., 2 seconds)
+                // if the user stops interacting
+                userInteractionTimer = setTimeout(() => {
+                    isUserInteracting = false;
+                    startAutoScroll();
+                }, 2000); 
+            });
+
+            // Pause auto-scroll on hover for inspection
+            carouselWrapper.addEventListener('mouseenter', () => {
+                stopAutoScroll();
+            });
+
+            // Resume auto-scroll on mouse leave, only if not currently interacting via wheel
+            carouselWrapper.addEventListener('mouseleave', () => {
+                if (!isUserInteracting) {
+                    startAutoScroll();
+                }
+            });
+        }
+
+        // --- 3. Modal Pop-up Functionality ---
+        const photoModal = document.getElementById('photo-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalCaption = document.getElementById('modal-caption');
+
+        // Function called when a photo in the carousel is clicked
+        function handlePhotoClick(element) {
+            const src = element.getAttribute('data-src');
+            const caption = element.getAttribute('data-caption');
+            openModal(src, caption);
+        }
+
+        function openModal(src, caption) {
+            modalImage.src = src;
+            modalCaption.textContent = caption;
+            
+            // Show modal and apply transition effects
+            photoModal.classList.remove('hidden');
+            photoModal.classList.add('flex');
+            // Force reflow for transition (modern browsers often handle this, but it's a good practice)
+            void photoModal.offsetWidth; 
+            setTimeout(() => {
+                photoModal.classList.remove('opacity-0');
+            }, 10);
+            
+            // Stop page scrolling while modal is open
+            document.body.style.overflow = 'hidden';
+            scrollContainer.style.overflowY = 'hidden'; 
+            
+            // Pause auto-scroll when modal opens
+            stopAutoScroll();
+        }
+
+        function closeModal() {
+            photoModal.classList.add('opacity-0');
+            
+            // Hide modal after transition completes
+            setTimeout(() => {
+                photoModal.classList.add('hidden');
+                photoModal.classList.remove('flex');
+                
+                // Restore scrolling
+                document.body.style.overflow = '';
+                scrollContainer.style.overflowY = 'scroll'; 
+                
+                // Resume auto-scroll when modal closes (if user wasn't manually scrolling)
+                if (!isUserInteracting) {
+                    startAutoScroll();
+                }
+            }, 300); // Match CSS transition duration
+        }
+        
+        // --- 4. Initialization Function ---
+        function initializeGallery() {
+            // 1. Parallax Setup
+            handleParallax();
+            window.addEventListener('scroll', handleParallax, true); // Listen on the scroll-container
+
+            // 2. Carousel Setup (Duplication and Width Calculation)
+            const originalItemCount = carouselTrack.children.length;
+
+            if (originalItemCount > 0) {
+                 // Clone the content once to enable seamless loop
+                 const clonedContent = carouselTrack.innerHTML;
+                 carouselTrack.insertAdjacentHTML('beforeend', clonedContent);
+                 
+                 // Calculate the width of the original content set (half the total scroll width)
+                 // Wait a moment for layout calculation to be accurate
+                 setTimeout(() => {
+                    originalContentWidth = carouselTrack.scrollWidth / 2;
+                    console.log(`Calculated original content width: ${originalContentWidth}`);
+                    
+                    // 3. Start Auto-Scroll only after width is calculated
+                    startAutoScroll();
+                 }, 500); // Small delay ensures content width is fully calculated
+            }
+        }
+
+        window.onload = initializeGallery;
+    </script>
+</body>
+</html>
